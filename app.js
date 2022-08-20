@@ -10,6 +10,7 @@ const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
+const GithubStrategy = require("passport-github");
 
 // const bcyrpt = require("bcrypt"); //bcrypting password 
 // const saltrounds = 10;
@@ -37,6 +38,7 @@ const userSchema = new mongoose.Schema ({
     email:String,
     password:String,
     googleId:String,
+    githubId:String,
     secret:String
 });
 
@@ -65,11 +67,21 @@ passport.use(new GoogleStrategy({
     userProfileURL:"https://www.googleapis.com/oauth2/v3/userinfo"
 },
 function(accessToken, refreshToken, profile, cb){
-   console.log(profile);
     User.findOrCreate({googleId:profile.id},function(err, user){
         return cb(err, user);
     });
 }
+));
+
+passport.use(new GithubStrategy({
+    clientID:process.env.GITHUB_ID,
+    clientSecret:process.env.GITHUB_SECRET,
+    callbackURL:"http://localhost:3000/auth/github/secrets"
+},function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ githubId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
 ));
 
 
@@ -83,6 +95,11 @@ app.get("/auth/google",
     passport.authenticate("google",{ scope: ["profile"] })
  );
    
+ app.get("/auth/github", 
+ passport.authenticate("github",{ scope: ["profile"] })
+);
+
+
 app.get("/login",function(req,res){
     res.render("login");                    
                                
@@ -122,6 +139,12 @@ app.get("/auth/google/secrets",
      res.redirect("/secrets") ;  
      
  });
+
+ app.get("/auth/github/secrets", 
+  passport.authenticate('github', { failureRedirect: '/login' }),function(req, res) {
+    // Successful authentication, redirect home.
+    res.redirect("/secrets");
+  });
 
  app.get("/submit",function (req,res) { 
     if(req.isAuthenticated){
