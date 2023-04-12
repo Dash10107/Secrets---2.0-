@@ -69,7 +69,7 @@ passport.deserializeUser(function (id,done) {
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret:process.env.CLIENT_SECRET,
-    callbackURL:"http://localhost:3000/auth/google/secrets"
+    callbackURL:process.env.GOOGLE_CALLBACK_URL
 },
 function(accessToken, refreshToken, profile, cb){
     User.findOrCreate({username: profile.emails[0].value,googleId:profile.id},function(err, user){
@@ -81,7 +81,7 @@ function(accessToken, refreshToken, profile, cb){
 passport.use(new GithubStrategy({
     clientID: process.env.GITHUB_ID,
     clientSecret: process.env.GITHUB_SECRET,
-    callbackURL: "http://localhost:3000/auth/github/secrets"
+    callbackURL: process.env.GITHUB_CALLBACK_URL
   },
   function(accessToken, refreshToken, profile, cb) {
     User.findOrCreate({username:profile.username,githubId: profile.id }, function (err, user) {
@@ -166,8 +166,6 @@ app.get("/auth/google/secrets",
   app.post("/submit",function (req,res) { 
     const submittedSecret  = req.body.secret;
     const userprofile = req.user.id;
-    
-    console.log(submittedSecret);
     User.findByIdAndUpdate(userprofile,{$push : {secret : submittedSecret}},function(err,foundUser){
         if(err)
         console.log(err);
