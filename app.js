@@ -166,6 +166,7 @@ app.get("/auth/google/secrets",
   app.post("/submit",function (req,res) { 
     const submittedSecret  = req.body.secret;
     const userprofile = req.user.id;
+    console.log(submittedSecret);
     User.findByIdAndUpdate(userprofile,{$push : {secret : submittedSecret}},function(err,foundUser){
         if(err)
         console.log(err);
